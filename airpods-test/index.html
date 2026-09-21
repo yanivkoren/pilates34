@@ -1,4 +1,4 @@
-<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>AirPods Test 3</title>
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black"><meta name="apple-mobile-web-app-title" content="AirPods Test"><meta name="theme-color" content="#111111"><link rel="manifest" href="./manifest.webmanifest"><link rel="apple-touch-icon" href="../apple-touch-icon-v2.png"><title>AirPods Test 3</title>
 <style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#111;color:#fff;margin:0;min-height:100vh;display:grid;place-items:center;text-align:center}main{width:min(92vw,520px)}h1{font-size:30px}.num{font-size:88px;font-weight:800;margin:8px}.box{background:#222;border-radius:16px;padding:15px;margin:12px 0;line-height:1.5}button{font:inherit;font-weight:700;border:0;border-radius:14px;padding:16px 20px;margin:5px}.log{font-size:14px;text-align:right;min-height:120px;white-space:pre-line}audio{width:100%}</style></head><body><main>
 <h1>בדיקת AirPods — ניסוי 3</h1><div class="num" id="num">1</div>
 <div class="box" id="status">שלב 1: לחץ "תפוס שליטת מדיה".</div>
@@ -18,4 +18,5 @@ install();
 m.addEventListener('play',()=>note('media PLAY event'));m.addEventListener('pause',()=>note('media PAUSE event'));
 document.getElementById('next').onclick=()=>move(1,'כפתור');document.getElementById('prev').onclick=()=>move(-1,'כפתור');
 document.getElementById('start').onclick=async()=>{install();m.muted=false;m.volume=.03;m.currentTime=0;try{await m.play();navigator.mediaSession.playbackState='playing';status.innerHTML='שלב 2: המדיה מתנגנת. <b>אל תפעיל Music/YouTube.</b> פתח עכשיו את מרכז הבקרה ובדוק מי מופיע כנגן הפעיל.';note('Requested active playback')}catch(e){status.textContent='ההפעלה נכשלה: '+e.message;note('play failed: '+e.message)}};
+if("serviceWorker"in navigator){navigator.serviceWorker.register("./sw.js").then(()=>note("PWA service worker ready")).catch(e=>note("SW error: "+e.message))}
 </script></main></body></html>
