@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Pilates 34">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-v2.png">
   <link rel="manifest" href="manifest.webmanifest">
   <title>Pilates 34</title>
   <style>
@@ -339,6 +339,11 @@
       color:var(--okText);
     }
     .wake-toggle:disabled { opacity:.55; }
+    .video-set-control { padding:12px 14px; border-bottom:1px solid var(--line); }
+    .video-set-title { display:block; margin-bottom:8px; color:var(--muted); font-size:13px; font-weight:800; }
+    .video-set-buttons { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .video-set-button { min-height:46px; border:1px solid var(--line); border-radius:12px; background:#242429; color:var(--text); font-size:13px; font-weight:850; padding:8px 5px; touch-action:manipulation; }
+    .video-set-button.active { background:var(--okBg); border-color:var(--okBorder); color:var(--okText); }
     .exercise-list {
       overflow:auto;
       -webkit-overflow-scrolling:touch;
@@ -517,20 +522,57 @@
       </button>
     </div>
 
+    <div class="video-set-control">
+      <span class="video-set-title" id="videoSetTitle">סרטוני הדגמה</span>
+      <div class="video-set-buttons" role="group" aria-labelledby="videoSetTitle">
+        <button class="video-set-button active" id="aloSetBtn" type="button" aria-pressed="true">Alo Moves</button>
+        <button class="video-set-button" id="perfectSetBtn" type="button" aria-pressed="false">Perfect Balance</button>
+      </div>
+    </div>
     <div class="exercise-list" id="exerciseList"></div>
 
     <div class="sheet-status">
       <div>Offline: <strong id="offlineMenuStatus">לא נבדק</strong></div>
       <div>מסך דולק: <strong id="wakeMenuStatus">לא נבדק</strong></div>
-      <div class="version">v1.0.3</div>
+      <div class="version">v1.1.0</div>
     </div>
   </section>
 </div>
 
 <script>
-const APP_VERSION = "1.0.3";
+const APP_VERSION = "1.1.0";
 const exercises = [{"n": 1, "name": "The Hundred", "reps": "10 סבבי נשימה — 100 שאיבות ידיים", "file": "mp4/1_hundreds.mp4"}, {"n": 2, "name": "The Roll Up", "reps": "3 חזרות", "file": "mp4/2_Roll-Up.mp4"}, {"n": 3, "name": "The Roll-Over", "reps": "3 לכל כיוון — 6 בסך הכול", "file": "mp4/3_Roll-Over.mp4"}, {"n": 4, "name": "Single Leg Circles", "reps": "5 לכל כיוון, לכל רגל", "file": "mp4/4_Single-Leg-Circles.mp4"}, {"n": 5, "name": "Rolling Like a Ball", "reps": "6 חזרות", "file": "mp4/5_Rolling-Like-Ball.mp4"}, {"n": 6, "name": "Single-Leg Stretch", "reps": "6 לכל רגל", "file": "mp4/6_Single-Leg-Stretch.mp4"}, {"n": 7, "name": "Double-Leg Stretch", "reps": "6 חזרות", "file": "mp4/7_Double-Leg-Stretch.mp4"}, {"n": 8, "name": "Spine Stretch Forward", "reps": "3 חזרות", "file": "mp4/8_Spine-Stretch-Forward.mp4"}, {"n": 9, "name": "Open-Leg Rocker", "reps": "6 חזרות", "file": "mp4/9_Open-Leg-Rocker.mp4"}, {"n": 10, "name": "Corkscrew", "reps": "3 לכל כיוון", "file": "mp4/10_Corkscrew.mp4"}, {"n": 11, "name": "Saw", "reps": "3 לכל צד", "file": "mp4/11_Saw.mp4"}, {"n": 12, "name": "Swan", "reps": "6 חזרות", "file": "mp4/12_Swan.mp4"}, {"n": 13, "name": "Single-Leg Kicks", "reps": "6 לכל רגל", "file": "mp4/13_Single-Leg-Kicks.mp4"}, {"n": 14, "name": "Double-Leg Kicks", "reps": "5 חזרות", "file": "mp4/14-DoubleLegKicks.mp4"}, {"n": 15, "name": "Neck Pull", "reps": "3 חזרות", "file": "mp4/15_Neck-Roll.mp4"}, {"n": 16, "name": "High Scissors", "reps": "6 לכל רגל", "file": "mp4/16_Raised-Scissors.mp4"}, {"n": 17, "name": "High Bicycle", "reps": "6 לכל כיוון", "file": "mp4/17_High-Bicycle.mp4"}, {"n": 18, "name": "Shoulder Bridge", "reps": "3 לכל רגל", "file": "mp4/18_Shoulder-Bridge.mp4"}, {"n": 19, "name": "Spine Twist", "reps": "3 לכל צד", "file": "mp4/19_Spine-Twist.mp4"}, {"n": 20, "name": "Jack Knife", "reps": "3 חזרות", "file": "mp4/20_JackKnife.mp4"}, {"n": 21, "name": "Side Kicks", "reps": "5 לכל וריאציה, לכל צד", "file": "mp4/21_SideKicks.mp4"}, {"n": 22, "name": "Teaser", "reps": "3 חזרות", "file": "mp4/22_Teasers.mp4"}, {"n": 23, "name": "Hip Twist", "reps": "3 לכל כיוון", "file": "mp4/23_Hip-Twists.mp4"}, {"n": 24, "name": "Swimming", "reps": "20–30 שניות", "file": "mp4/24_Swimming.mp4"}, {"n": 25, "name": "Leg Pull Down (Leg Pull Front)", "reps": "3 לכל רגל", "file": "mp4/25_Leg-Pull-Down.mp4"}, {"n": 26, "name": "Leg Pull Up (Leg Pull Back)", "reps": "3 לכל רגל", "file": "mp4/26_Leg-Pull-Up.mp4"}, {"n": 27, "name": "Kneeling Side Kicks", "reps": "4 לכל רגל", "file": "mp4/27_Kneeling-Side-Kicks.mp4"}, {"n": 28, "name": "Side Bend", "reps": "3 לכל צד", "file": "mp4/28_Side-Bend.mp4"}, {"n": 29, "name": "Boomerang", "reps": "3 חזרות", "file": "mp4/29_Boomerang.mp4"}, {"n": 30, "name": "Seal", "reps": "6 חזרות", "file": "mp4/30_Seal.mp4"}, {"n": 31, "name": "Crab", "reps": "6 חזרות", "file": "mp4/31_Crab.mp4"}, {"n": 32, "name": "Rocking", "reps": "5 חזרות", "file": "mp4/32_Rocking.mp4"}, {"n": 33, "name": "Control Balance", "reps": "3 לכל רגל", "file": "mp4/33_Balance.mp4"}, {"n": 34, "name": "Push-Ups", "reps": "3 סבבים של 3 — 9 בסך הכול", "file": "mp4/34_PushUps.mp4"}];
 
+// Same filename in both folders; selected video set persists without resetting workout.
+const VIDEO_SETS = Object.freeze({ alo:'alo', perfect:'perfect-balance' });
+const OFFLINE_CACHE = 'pilates34-release-1.1.0';
+let selectedSet = 'alo';
+function videoPath(exercise, set=selectedSet) {
+  return 'mp4/' + VIDEO_SETS[set] + '/' + exercise.file.slice(4);
+}
+function loadVideoSet() {
+  try {
+    const saved = localStorage.getItem('pilates34-video-set');
+    if (Object.prototype.hasOwnProperty.call(VIDEO_SETS, saved)) selectedSet = saved;
+  } catch (_) {}
+  updateVideoSetButtons();
+}
+function updateVideoSetButtons() {
+  for (const [key, button] of [['alo', el.aloSetBtn], ['perfect', el.perfectSetBtn]]) {
+    const active = selectedSet === key;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  }
+}
+function selectVideoSet(set) {
+  if (!Object.prototype.hasOwnProperty.call(VIDEO_SETS, set) || selectedSet === set) return;
+  selectedSet = set;
+  try { localStorage.setItem('pilates34-video-set', set); } catch (_) {}
+  updateVideoSetButtons();
+  closeMenu();
+  if (!workoutFinished) render();
+  showToast('✓ סט הסרטונים הוחלף ל-' + (set === 'alo' ? 'Alo Moves' : 'Perfect Balance'), 'ok', 2700);
+}
 let index = 0;
 let wakeLock = null;
 let preloadVideo = null;
@@ -566,6 +608,8 @@ const el = {
   offlineMenuStatus: document.getElementById('offlineMenuStatus'),
   wakeMenuStatus: document.getElementById('wakeMenuStatus'),
   wakeToggleBtn: document.getElementById('wakeToggleBtn'),
+  aloSetBtn: document.getElementById('aloSetBtn'),
+  perfectSetBtn: document.getElementById('perfectSetBtn'),
   warnToast: document.getElementById('warnToast'),
   okToast: document.getElementById('okToast')
 };
@@ -601,7 +645,7 @@ function preloadNext() {
   preloadVideo.preload = 'auto';
   preloadVideo.muted = true;
   preloadVideo.playsInline = true;
-  preloadVideo.src = exercises[index + 1].file;
+  preloadVideo.src = videoPath(exercises[index + 1]);
   preloadVideo.load();
 }
 
@@ -632,7 +676,7 @@ async function render() {
   el.video.pause();
   el.video.removeAttribute('src');
   el.video.load();
-  el.video.src = x.file;
+  el.video.src = videoPath(x);
   el.video.load();
   await ensureVideoPlaying(true);
 
@@ -866,31 +910,36 @@ async function setupOffline() {
     el.offlineMenuStatus.textContent = 'בדיקה מקומית';
     return;
   }
-
-  if (!('serviceWorker' in navigator)) {
+  if (!('serviceWorker' in navigator) || !('caches' in window)) {
     el.offlineMenuStatus.textContent = 'לא נתמך';
     showToast('⚠️ מצב Offline אינו נתמך בדפדפן הזה.');
     return;
   }
-
-  el.offlineMenuStatus.textContent = 'מכין…';
-
+  el.offlineMenuStatus.textContent = 'מוריד את שני הסטים…';
   try {
-    const registration = await navigator.serviceWorker.register('./sw.js');
+    const registration = await navigator.serviceWorker.register('./sw.js', { updateViaCache:'none' });
     registration.update().catch(() => {});
-
-    const ready = navigator.serviceWorker.ready;
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('offline-timeout')), 90000)
-    );
-
-    await Promise.race([ready, timeout]);
-
-    el.offlineMenuStatus.textContent = 'מוכן';
-    showToast('✓ האפליקציה מוכנה לשימוש ללא אינטרנט', 'ok', 3500);
+    const required = [
+      './', './index.html', './manifest.webmanifest',
+      './apple-touch-icon-v2.png', './icon-192-v2.png', './icon-512-v2.png',
+      ...exercises.flatMap(x => [videoPath(x, 'alo'), videoPath(x, 'perfect')])
+    ];
+    const deadline = Date.now() + 120000;
+    let complete = false;
+    while (Date.now() < deadline && !complete) {
+      if (await caches.has(OFFLINE_CACHE)) {
+        const cache = await caches.open(OFFLINE_CACHE);
+        const entries = await Promise.all(required.map(path => cache.match(path)));
+        complete = entries.every(Boolean);
+      }
+      if (!complete) await new Promise(resolve => setTimeout(resolve, 1100));
+    }
+    if (!complete) throw new Error('offline-incomplete');
+    el.offlineMenuStatus.textContent = 'שני הסטים מוכנים';
+    showToast('✓ שני סטים של סרטונים זמינים ללא אינטרנט', 'ok', 3500);
   } catch (_) {
     el.offlineMenuStatus.textContent = 'לא הושלם';
-    showToast('⚠️ הכנת מצב Offline לא הושלמה. ודא שכל 34 הסרטונים קיימים ונסה שוב עם חיבור לאינטרנט.', 'warn', 8000);
+    showToast('⚠️ מצב Offline עדיין לא הושלם. ודא ששני הסטים (68 סרטונים) הועלו, ופתח שוב עם אינטרנט.', 'warn', 8000);
   }
 }
 
@@ -899,7 +948,7 @@ el.video.addEventListener('error', () => {
   el.video.style.display = 'none';
   el.playFallback.style.display = 'none';
   el.mediaError.style.display = 'flex';
-  el.mediaError.textContent = `לא נמצא או לא ניתן לנגן: ${x.file}`;
+  el.mediaError.textContent = `לא נמצא או לא ניתן לנגן: ${videoPath(x)}`;
 });
 
 el.playFallback.addEventListener('click', async () => {
@@ -937,6 +986,8 @@ el.menuBtn.addEventListener('click', async () => {
 });
 
 el.closeMenuBtn.addEventListener('click', closeMenu);
+el.aloSetBtn.addEventListener('click', () => selectVideoSet('alo'));
+el.perfectSetBtn.addEventListener('click', () => selectVideoSet('perfect'));
 
 el.wakeToggleBtn.addEventListener('click', async () => {
   const active = Boolean(wakeLock && !wakeLock.released);
@@ -1014,6 +1065,7 @@ window.addEventListener('focus', () => {
 
 buildExerciseMenu();
 loadPosition();
+loadVideoSet();
 keepAwakeEnabled = false;
 setWakeStatus('כבוי');
 updateWakeToggle();
