@@ -1,4 +1,4 @@
-const CACHE = 'pilates34-release-1.0.1';
+const CACHE = 'pilates34-release-1.0.2';
 const REQUIRED_ASSETS = [
   "./",
   "./index.html",
