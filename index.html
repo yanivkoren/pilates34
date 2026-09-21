@@ -1,0 +1,866 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0f0f10">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Pilates 34">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>Pilates 34</title>
+  <style>
+    :root {
+      --bg:#0f0f10;
+      --panel:#171719;
+      --text:#f7f7f7;
+      --muted:#a9a9b0;
+      --line:#2b2b31;
+      --accent:#f7f7f7;
+      --accentText:#111;
+      --warnBg:#2a2112;
+      --warnText:#ffd88a;
+      --warnBorder:#6d5427;
+      --okBg:#14251c;
+      --okText:#a9efc8;
+      --okBorder:#2d6041;
+    }
+    * { box-sizing:border-box; }
+    html, body {
+      margin:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      overscroll-behavior:none;
+      background:var(--bg);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+    }
+    body {
+      position:fixed;
+      inset:0;
+      -webkit-text-size-adjust:100%;
+      -webkit-touch-callout:none;
+    }
+    button { font:inherit; }
+
+    .app {
+      width:100%;
+      height:100vh;
+      height:100dvh;
+      max-height:100dvh;
+      overflow:hidden;
+      display:grid;
+      grid-template-rows:auto auto auto minmax(0,1fr) auto;
+      gap:10px;
+      padding:
+        max(10px,env(safe-area-inset-top))
+        max(10px,env(safe-area-inset-right))
+        max(10px,env(safe-area-inset-bottom))
+        max(10px,env(safe-area-inset-left));
+    }
+
+    .top {
+      display:grid;
+      grid-template-columns:1fr auto 1fr;
+      align-items:center;
+      gap:8px;
+      min-height:40px;
+    }
+    .counter {
+      color:var(--muted);
+      font-weight:800;
+      text-align:right;
+      white-space:nowrap;
+    }
+    .app-title {
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.08em;
+      direction:ltr;
+      white-space:nowrap;
+    }
+    .top-actions {
+      display:flex;
+      gap:6px;
+      justify-self:start;
+    }
+    .icon-btn {
+      width:40px;
+      height:40px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:var(--panel);
+      color:var(--text);
+      display:grid;
+      place-items:center;
+      font-weight:800;
+      touch-action:manipulation;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .icon-btn:disabled { opacity:.35; }
+    .menu-btn { font-size:23px; line-height:1; padding-bottom:5px; }
+
+    .progress {
+      height:4px;
+      border-radius:999px;
+      background:var(--line);
+      overflow:hidden;
+    }
+    .progress > div {
+      height:100%;
+      width:0%;
+      background:var(--accent);
+      transition:width .2s ease;
+    }
+
+    .info {
+      text-align:center;
+      padding:0 8px;
+      min-width:0;
+    }
+    .name {
+      direction:ltr;
+      margin:0;
+      font-size:clamp(26px,7vw,44px);
+      line-height:1.02;
+      letter-spacing:-.02em;
+      overflow-wrap:anywhere;
+    }
+    .reps {
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:clamp(16px,4.6vw,23px);
+      line-height:1.15;
+      font-weight:750;
+    }
+
+    .media {
+      min-height:0;
+      min-width:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#fff;
+      border-radius:18px;
+      overflow:hidden;
+      border:1px solid var(--line);
+      position:relative;
+    }
+    .media video {
+      width:100%;
+      height:100%;
+      min-height:0;
+      object-fit:contain;
+      display:block;
+      background:#fff;
+    }
+    .media-error, .play-fallback {
+      display:none;
+      position:absolute;
+      inset:0;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:20px;
+      color:#111;
+      background:rgba(255,255,255,.94);
+      font-weight:800;
+    }
+    .play-fallback {
+      border:0;
+      width:100%;
+      cursor:pointer;
+      font-size:18px;
+    }
+
+    .next {
+      width:100%;
+      min-height:88px;
+      border:0;
+      border-radius:20px;
+      background:var(--accent);
+      color:var(--accentText);
+      font-size:clamp(22px,6.3vw,32px);
+      font-weight:900;
+      line-height:1.05;
+      padding:14px 18px;
+      touch-action:manipulation;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .next:active { transform:scale(.994); }
+
+    .finish {
+      display:none;
+      grid-row:3 / 6;
+      align-self:center;
+      justify-self:stretch;
+      text-align:center;
+      padding:20px 12px;
+    }
+    .finish h1 {
+      font-size:clamp(34px,9vw,48px);
+      margin:0 0 10px;
+    }
+    .restart {
+      margin-top:14px;
+      min-height:52px;
+      padding:0 20px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:var(--panel);
+      color:var(--text);
+      font-weight:800;
+    }
+
+    /* Temporary notifications: no permanent screen space */
+    .toast-stack {
+      position:fixed;
+      z-index:90;
+      left:max(12px,env(safe-area-inset-left));
+      right:max(12px,env(safe-area-inset-right));
+      top:max(12px,env(safe-area-inset-top));
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+      pointer-events:none;
+    }
+    .toast {
+      width:min(680px,100%);
+      padding:11px 14px;
+      border-radius:14px;
+      font-size:14px;
+      line-height:1.35;
+      font-weight:750;
+      text-align:center;
+      box-shadow:0 8px 30px rgba(0,0,0,.28);
+      opacity:0;
+      transform:translateY(-8px);
+      transition:opacity .18s ease, transform .18s ease;
+    }
+    .toast.show { opacity:1; transform:none; }
+    .toast.warn {
+      background:var(--warnBg);
+      color:var(--warnText);
+      border:1px solid var(--warnBorder);
+    }
+    .toast.ok {
+      background:var(--okBg);
+      color:var(--okText);
+      border:1px solid var(--okBorder);
+    }
+
+    /* Menu overlay */
+    .overlay {
+      position:fixed;
+      inset:0;
+      z-index:60;
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      background:rgba(0,0,0,.58);
+      padding:12px;
+      padding-bottom:max(12px,env(safe-area-inset-bottom));
+    }
+    .overlay.open { display:flex; }
+    .sheet {
+      width:min(680px,100%);
+      max-height:min(82dvh,720px);
+      background:var(--panel);
+      color:var(--text);
+      border:1px solid var(--line);
+      border-radius:24px;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .sheet-head {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+    }
+    .sheet-head h2 { margin:0; font-size:20px; }
+    .close-btn {
+      width:42px;
+      height:42px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:transparent;
+      color:var(--text);
+      font-size:22px;
+    }
+    .sheet-tools {
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:10px;
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+    }
+    .reset-btn {
+      min-height:46px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:transparent;
+      color:var(--text);
+      font-weight:800;
+      padding:0 14px;
+    }
+    .jump-current {
+      align-self:center;
+      color:var(--muted);
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .exercise-list {
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+      padding:8px;
+    }
+    .exercise-item {
+      width:100%;
+      min-height:50px;
+      display:grid;
+      grid-template-columns:42px minmax(0,1fr);
+      align-items:center;
+      gap:10px;
+      border:0;
+      border-radius:13px;
+      background:transparent;
+      color:var(--text);
+      text-align:right;
+      padding:7px 10px;
+    }
+    .exercise-item:active, .exercise-item.current { background:#242429; }
+    .exercise-num {
+      width:34px;
+      height:34px;
+      display:grid;
+      place-items:center;
+      border-radius:10px;
+      border:1px solid var(--line);
+      color:var(--muted);
+      font-weight:800;
+    }
+    .exercise-label {
+      min-width:0;
+      direction:ltr;
+      text-align:left;
+    }
+    .exercise-label strong {
+      display:block;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .exercise-label small {
+      display:block;
+      direction:rtl;
+      text-align:left;
+      color:var(--muted);
+      margin-top:2px;
+    }
+    .sheet-status {
+      border-top:1px solid var(--line);
+      padding:10px 14px 12px;
+      display:grid;
+      grid-template-columns:1fr 1fr auto;
+      gap:8px 12px;
+      color:var(--muted);
+      font-size:12px;
+      align-items:center;
+    }
+    .sheet-status strong { color:var(--text); }
+    .version { direction:ltr; white-space:nowrap; }
+
+    /* Landscape phone: fit everything on one screen */
+    @media (orientation:landscape) and (max-height:600px) {
+      .app {
+        grid-template-columns:minmax(0,1.5fr) minmax(220px,.8fr);
+        grid-template-rows:auto auto minmax(0,1fr) auto;
+        column-gap:10px;
+        row-gap:7px;
+        padding:
+          max(6px,env(safe-area-inset-top))
+          max(8px,env(safe-area-inset-right))
+          max(6px,env(safe-area-inset-bottom))
+          max(8px,env(safe-area-inset-left));
+      }
+      .top { grid-column:1/-1; grid-row:1; min-height:34px; }
+      .icon-btn { width:34px; height:34px; border-radius:10px; }
+      .progress { grid-column:1/-1; grid-row:2; height:3px; }
+      .media { grid-column:1; grid-row:3/5; border-radius:14px; }
+      .info { grid-column:2; grid-row:3; align-self:center; padding:0 4px; }
+      .name { font-size:clamp(24px,4.4vw,38px); line-height:1; }
+      .reps { font-size:clamp(15px,2.6vw,21px); margin-top:6px; }
+      .next {
+        grid-column:2;
+        grid-row:4;
+        min-height:62px;
+        border-radius:16px;
+        padding:10px 12px;
+        font-size:clamp(20px,3.3vw,28px);
+      }
+      .overlay { align-items:center; }
+      .sheet { max-height:90dvh; }
+    }
+
+    @media (orientation:landscape) and (max-height:430px) {
+      .app {
+        grid-template-columns:minmax(0,1.6fr) minmax(190px,.72fr);
+        row-gap:5px;
+      }
+      .top { min-height:30px; }
+      .icon-btn { width:30px; height:30px; }
+      .name { font-size:clamp(21px,4vw,32px); }
+      .reps { font-size:clamp(13px,2.2vw,18px); }
+      .next { min-height:54px; font-size:clamp(18px,3vw,24px); }
+      .media { border-radius:12px; }
+      .app-title { display:none; }
+    }
+
+    @media (prefers-reduced-motion:reduce) {
+      .progress > div, .toast { transition:none; }
+      .next:active { transform:none; }
+    }
+  </style>
+</head>
+<body>
+<main class="app" id="app">
+  <div class="top">
+    <div class="counter" id="counter">1 / 34</div>
+    <div class="app-title">PILATES 34</div>
+    <div class="top-actions">
+      <button class="icon-btn menu-btn" id="menuBtn" type="button" aria-label="תפריט וקפיצה לתרגיל">•••</button>
+      <button class="icon-btn" id="prevBtn" type="button" aria-label="התרגיל הקודם">↩</button>
+    </div>
+  </div>
+
+  <div class="progress" aria-hidden="true"><div id="progressBar"></div></div>
+
+  <section class="info" id="info">
+    <h1 class="name" id="exerciseName">The Hundred</h1>
+    <p class="reps" id="exerciseReps">10 סבבי נשימה — 100 שאיבות ידיים</p>
+  </section>
+
+  <section class="media" id="media">
+    <video
+      id="exerciseVideo"
+      autoplay
+      loop
+      muted
+      playsinline
+      webkit-playsinline
+      preload="auto"
+      disablepictureinpicture
+    ></video>
+    <div class="media-error" id="mediaError"></div>
+    <button class="play-fallback" id="playFallback" type="button">גע כאן להפעלת ההדגמה</button>
+  </section>
+
+  <button class="next" id="nextBtn" type="button">סיימתי — הבא ←</button>
+
+  <section class="finish" id="finish">
+    <h1>האימון הושלם ✓</h1>
+    <p>34 מתוך 34 תרגילים</p>
+    <button class="restart" id="restartBtn" type="button">התחל מחדש</button>
+  </section>
+</main>
+
+<div class="toast-stack" aria-live="polite" aria-atomic="true">
+  <div class="toast warn" id="warnToast"></div>
+  <div class="toast ok" id="okToast"></div>
+</div>
+
+<div class="overlay" id="overlay" aria-hidden="true">
+  <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
+    <div class="sheet-head">
+      <h2 id="menuTitle">בחירת תרגיל</h2>
+      <button class="close-btn" id="closeMenuBtn" type="button" aria-label="סגור">×</button>
+    </div>
+
+    <div class="sheet-tools">
+      <button class="reset-btn" id="resetFromMenuBtn" type="button">התחל מהתחלה</button>
+      <div class="jump-current" id="jumpCurrent">כעת: 1 / 34</div>
+    </div>
+
+    <div class="exercise-list" id="exerciseList"></div>
+
+    <div class="sheet-status">
+      <div>Offline: <strong id="offlineMenuStatus">לא נבדק</strong></div>
+      <div>מסך דולק: <strong id="wakeMenuStatus">לא נבדק</strong></div>
+      <div class="version">v1.0.0</div>
+    </div>
+  </section>
+</div>
+
+<script>
+const APP_VERSION = "1.0.0";
+const exercises = [{"n": 1, "name": "The Hundred", "reps": "10 סבבי נשימה — 100 שאיבות ידיים", "file": "mp4/1_hundreds.mp4"}, {"n": 2, "name": "The Roll Up", "reps": "3 חזרות", "file": "mp4/2_Roll-Up.mp4"}, {"n": 3, "name": "The Roll-Over", "reps": "3 לכל כיוון — 6 בסך הכול", "file": "mp4/3_Roll-Over.mp4"}, {"n": 4, "name": "Single Leg Circles", "reps": "5 לכל כיוון, לכל רגל", "file": "mp4/4_Single-Leg-Circles.mp4"}, {"n": 5, "name": "Rolling Like a Ball", "reps": "6 חזרות", "file": "mp4/5_Rolling-Like-Ball.mp4"}, {"n": 6, "name": "Single-Leg Stretch", "reps": "6 לכל רגל", "file": "mp4/6_Single-Leg-Stretch.mp4"}, {"n": 7, "name": "Double-Leg Stretch", "reps": "6 חזרות", "file": "mp4/7_Double-Leg-Stretch.mp4"}, {"n": 8, "name": "Spine Stretch Forward", "reps": "3 חזרות", "file": "mp4/8_Spine-Stretch-Forward.mp4"}, {"n": 9, "name": "Open-Leg Rocker", "reps": "6 חזרות", "file": "mp4/9_Open-Leg-Rocker.mp4"}, {"n": 10, "name": "Corkscrew", "reps": "3 לכל כיוון", "file": "mp4/10_Corkscrew.mp4"}, {"n": 11, "name": "Saw", "reps": "3 לכל צד", "file": "mp4/11_Saw.mp4"}, {"n": 12, "name": "Swan", "reps": "6 חזרות", "file": "mp4/12_Swan.mp4"}, {"n": 13, "name": "Single-Leg Kicks", "reps": "6 לכל רגל", "file": "mp4/13_Single-Leg-Kicks.mp4"}, {"n": 14, "name": "Double-Leg Kicks", "reps": "5 חזרות", "file": "mp4/14-DoubleLegKicks.mp4"}, {"n": 15, "name": "Neck Pull", "reps": "3 חזרות", "file": "mp4/15_Neck-Roll.mp4"}, {"n": 16, "name": "High Scissors", "reps": "6 לכל רגל", "file": "mp4/16_Raised-Scissors.mp4"}, {"n": 17, "name": "High Bicycle", "reps": "6 לכל כיוון", "file": "mp4/17_High-Bicycle.mp4"}, {"n": 18, "name": "Shoulder Bridge", "reps": "3 לכל רגל", "file": "mp4/18_Shoulder-Bridge.mp4"}, {"n": 19, "name": "Spine Twist", "reps": "3 לכל צד", "file": "mp4/19_Spine-Twist.mp4"}, {"n": 20, "name": "Jack Knife", "reps": "3 חזרות", "file": "mp4/20_JackKnife.mp4"}, {"n": 21, "name": "Side Kicks", "reps": "5 לכל וריאציה, לכל צד", "file": "mp4/21_SideKicks.mp4"}, {"n": 22, "name": "Teaser", "reps": "3 חזרות", "file": "mp4/22_Teasers.mp4"}, {"n": 23, "name": "Hip Twist", "reps": "3 לכל כיוון", "file": "mp4/23_Hip-Twists.mp4"}, {"n": 24, "name": "Swimming", "reps": "20–30 שניות", "file": "mp4/24_Swimming.mp4"}, {"n": 25, "name": "Leg Pull Down (Leg Pull Front)", "reps": "3 לכל רגל", "file": "mp4/25_Leg-Pull-Down.mp4"}, {"n": 26, "name": "Leg Pull Up (Leg Pull Back)", "reps": "3 לכל רגל", "file": "mp4/26_Leg-Pull-Up.mp4"}, {"n": 27, "name": "Kneeling Side Kicks", "reps": "4 לכל רגל", "file": "mp4/27_Kneeling-Side-Kicks.mp4"}, {"n": 28, "name": "Side Bend", "reps": "3 לכל צד", "file": "mp4/28_Side-Bend.mp4"}, {"n": 29, "name": "Boomerang", "reps": "3 חזרות", "file": "mp4/29_Boomerang.mp4"}, {"n": 30, "name": "Seal", "reps": "6 חזרות", "file": "mp4/30_Seal.mp4"}, {"n": 31, "name": "Crab", "reps": "6 חזרות", "file": "mp4/31_Crab.mp4"}, {"n": 32, "name": "Rocking", "reps": "5 חזרות", "file": "mp4/32_Rocking.mp4"}, {"n": 33, "name": "Control Balance", "reps": "3 לכל רגל", "file": "mp4/33_Balance.mp4"}, {"n": 34, "name": "Push-Ups", "reps": "3 סבבים של 3 — 9 בסך הכול", "file": "mp4/34_PushUps.mp4"}];
+
+let index = 0;
+let wakeLock = null;
+let preloadVideo = null;
+let workoutFinished = false;
+let wakeWarningShown = false;
+let toastTimer = null;
+
+const el = {
+  counter: document.getElementById('counter'),
+  progress: document.getElementById('progressBar'),
+  name: document.getElementById('exerciseName'),
+  reps: document.getElementById('exerciseReps'),
+  video: document.getElementById('exerciseVideo'),
+  mediaError: document.getElementById('mediaError'),
+  playFallback: document.getElementById('playFallback'),
+  prev: document.getElementById('prevBtn'),
+  next: document.getElementById('nextBtn'),
+  info: document.getElementById('info'),
+  media: document.getElementById('media'),
+  finish: document.getElementById('finish'),
+  restart: document.getElementById('restartBtn'),
+  menuBtn: document.getElementById('menuBtn'),
+  overlay: document.getElementById('overlay'),
+  closeMenuBtn: document.getElementById('closeMenuBtn'),
+  resetFromMenuBtn: document.getElementById('resetFromMenuBtn'),
+  jumpCurrent: document.getElementById('jumpCurrent'),
+  exerciseList: document.getElementById('exerciseList'),
+  offlineMenuStatus: document.getElementById('offlineMenuStatus'),
+  wakeMenuStatus: document.getElementById('wakeMenuStatus'),
+  warnToast: document.getElementById('warnToast'),
+  okToast: document.getElementById('okToast')
+};
+
+function showToast(message, type='warn', ms=6000) {
+  const toast = type === 'ok' ? el.okToast : el.warnToast;
+  const other = type === 'ok' ? el.warnToast : el.okToast;
+  other.classList.remove('show');
+  toast.textContent = message;
+  toast.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), ms);
+}
+
+function savePosition() {
+  try {
+    localStorage.setItem('pilates34-index', String(index));
+    localStorage.setItem('pilates34-version', APP_VERSION);
+  } catch (_) {}
+}
+
+function loadPosition() {
+  try {
+    const v = Number(localStorage.getItem('pilates34-index'));
+    if (Number.isInteger(v) && v >= 0 && v < exercises.length) index = v;
+  } catch (_) {}
+}
+
+function preloadNext() {
+  preloadVideo = null;
+  if (index + 1 >= exercises.length) return;
+  preloadVideo = document.createElement('video');
+  preloadVideo.preload = 'auto';
+  preloadVideo.muted = true;
+  preloadVideo.playsInline = true;
+  preloadVideo.src = exercises[index + 1].file;
+  preloadVideo.load();
+}
+
+async function ensureVideoPlaying(showFallback=true) {
+  try {
+    await el.video.play();
+    el.playFallback.style.display = 'none';
+    return true;
+  } catch (_) {
+    if (showFallback) el.playFallback.style.display = 'flex';
+    return false;
+  }
+}
+
+async function render() {
+  workoutFinished = false;
+  const x = exercises[index];
+
+  el.counter.textContent = `${index + 1} / ${exercises.length}`;
+  el.progress.style.width = `${((index + 1) / exercises.length) * 100}%`;
+  el.name.textContent = x.name;
+  el.reps.textContent = x.reps;
+
+  el.mediaError.style.display = 'none';
+  el.playFallback.style.display = 'none';
+  el.video.style.display = 'block';
+
+  el.video.pause();
+  el.video.removeAttribute('src');
+  el.video.load();
+  el.video.src = x.file;
+  el.video.load();
+  await ensureVideoPlaying(true);
+
+  el.prev.disabled = index === 0;
+  el.next.textContent = index === exercises.length - 1
+    ? 'סיימתי את האימון ✓'
+    : 'סיימתי — הבא ←';
+
+  el.info.style.display = '';
+  el.media.style.display = '';
+  el.next.style.display = '';
+  el.finish.style.display = 'none';
+  el.jumpCurrent.textContent = `כעת: ${index + 1} / ${exercises.length}`;
+
+  [...el.exerciseList.querySelectorAll('.exercise-item')].forEach((btn, i) => {
+    btn.classList.toggle('current', i === index);
+    btn.setAttribute('aria-current', i === index ? 'true' : 'false');
+  });
+
+  savePosition();
+  preloadNext();
+}
+
+async function finishWorkout() {
+  workoutFinished = true;
+  el.video.pause();
+  el.info.style.display = 'none';
+  el.media.style.display = 'none';
+  el.next.style.display = 'none';
+  el.finish.style.display = 'block';
+
+  if (wakeLock && !wakeLock.released) {
+    try { await wakeLock.release(); } catch (_) {}
+  }
+  wakeLock = null;
+  setWakeStatus('לא פעיל');
+
+  try { localStorage.removeItem('pilates34-index'); } catch (_) {}
+}
+
+function buildExerciseMenu() {
+  const frag = document.createDocumentFragment();
+
+  exercises.forEach((x, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'exercise-item';
+    btn.dataset.index = String(i);
+
+    const num = document.createElement('span');
+    num.className = 'exercise-num';
+    num.textContent = String(x.n);
+
+    const label = document.createElement('span');
+    label.className = 'exercise-label';
+
+    const strong = document.createElement('strong');
+    strong.textContent = x.name;
+
+    const small = document.createElement('small');
+    small.textContent = x.reps;
+
+    label.append(strong, small);
+    btn.append(num, label);
+
+    btn.addEventListener('click', async () => {
+      index = i;
+      closeMenu();
+      await requestWakeLock({ warn:true });
+      render();
+    });
+
+    frag.appendChild(btn);
+  });
+
+  el.exerciseList.appendChild(frag);
+}
+
+function openMenu() {
+  el.overlay.classList.add('open');
+  el.overlay.setAttribute('aria-hidden', 'false');
+  el.jumpCurrent.textContent = `כעת: ${index + 1} / ${exercises.length}`;
+
+  const current = el.exerciseList.querySelector(`.exercise-item[data-index="${index}"]`);
+  if (current) current.scrollIntoView({ block:'center' });
+}
+
+function closeMenu() {
+  el.overlay.classList.remove('open');
+  el.overlay.setAttribute('aria-hidden', 'true');
+}
+
+function setWakeStatus(text) {
+  el.wakeMenuStatus.textContent = text;
+}
+
+async function requestWakeLock({ warn=true } = {}) {
+  if (document.visibilityState !== 'visible') return false;
+
+  if (!('wakeLock' in navigator)) {
+    setWakeStatus('לא נתמך');
+    if (warn && !wakeWarningShown) {
+      wakeWarningShown = true;
+      showToast('⚠️ לא ניתן להשאיר את המסך דולק אוטומטית. מומלץ לבטל זמנית את הנעילה האוטומטית בזמן האימון.');
+    }
+    return false;
+  }
+
+  if (wakeLock && !wakeLock.released) {
+    setWakeStatus('פעיל');
+    return true;
+  }
+
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    setWakeStatus('פעיל');
+
+    wakeLock.addEventListener('release', () => {
+      wakeLock = null;
+      if (document.visibilityState === 'visible') setWakeStatus('שוחרר');
+    });
+
+    return true;
+  } catch (_) {
+    wakeLock = null;
+    setWakeStatus('לא אושר');
+
+    if (warn && !wakeWarningShown) {
+      wakeWarningShown = true;
+      showToast('⚠️ הדפדפן לא אישר שמירת מסך דולק. מומלץ לבטל זמנית את הנעילה האוטומטית בזמן האימון.');
+    }
+    return false;
+  }
+}
+
+async function resumeAfterReturn() {
+  if (document.visibilityState !== 'visible' || workoutFinished) return;
+  await requestWakeLock({ warn:true });
+  await ensureVideoPlaying(true);
+}
+
+async function setupOffline() {
+  if (location.protocol === 'file:') {
+    el.offlineMenuStatus.textContent = 'בדיקה מקומית';
+    return;
+  }
+
+  if (!('serviceWorker' in navigator)) {
+    el.offlineMenuStatus.textContent = 'לא נתמך';
+    showToast('⚠️ מצב Offline אינו נתמך בדפדפן הזה.');
+    return;
+  }
+
+  el.offlineMenuStatus.textContent = 'מכין…';
+
+  try {
+    const registration = await navigator.serviceWorker.register('./sw.js');
+    registration.update().catch(() => {});
+
+    const ready = navigator.serviceWorker.ready;
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('offline-timeout')), 90000)
+    );
+
+    await Promise.race([ready, timeout]);
+
+    el.offlineMenuStatus.textContent = 'מוכן';
+    showToast('✓ האפליקציה מוכנה לשימוש ללא אינטרנט', 'ok', 3500);
+  } catch (_) {
+    el.offlineMenuStatus.textContent = 'לא הושלם';
+    showToast('⚠️ הכנת מצב Offline לא הושלמה. ודא שכל 34 הסרטונים קיימים ונסה שוב עם חיבור לאינטרנט.', 'warn', 8000);
+  }
+}
+
+el.video.addEventListener('error', () => {
+  const x = exercises[index];
+  el.video.style.display = 'none';
+  el.playFallback.style.display = 'none';
+  el.mediaError.style.display = 'flex';
+  el.mediaError.textContent = `לא נמצא או לא ניתן לנגן: ${x.file}`;
+});
+
+el.playFallback.addEventListener('click', async () => {
+  await ensureVideoPlaying(true);
+  await requestWakeLock({ warn:true });
+});
+
+el.next.addEventListener('click', async () => {
+  await requestWakeLock({ warn:true });
+  if (index < exercises.length - 1) {
+    index++;
+    render();
+  } else {
+    await finishWorkout();
+  }
+});
+
+el.prev.addEventListener('click', async () => {
+  await requestWakeLock({ warn:true });
+  if (index > 0) {
+    index--;
+    render();
+  }
+});
+
+el.restart.addEventListener('click', async () => {
+  await requestWakeLock({ warn:true });
+  index = 0;
+  render();
+});
+
+el.menuBtn.addEventListener('click', async () => {
+  await requestWakeLock({ warn:true });
+  openMenu();
+});
+
+el.closeMenuBtn.addEventListener('click', closeMenu);
+
+el.overlay.addEventListener('click', (e) => {
+  if (e.target === el.overlay) closeMenu();
+});
+
+el.resetFromMenuBtn.addEventListener('click', async () => {
+  index = 0;
+  closeMenu();
+  await requestWakeLock({ warn:true });
+  render();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && el.overlay.classList.contains('open')) {
+    closeMenu();
+    return;
+  }
+  if (el.overlay.classList.contains('open')) return;
+
+  if (e.key === 'ArrowLeft' || e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault();
+    el.next.click();
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    el.prev.click();
+  }
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    el.video.pause();
+  } else {
+    resumeAfterReturn();
+  }
+});
+
+window.addEventListener('pageshow', () => {
+  resumeAfterReturn();
+});
+
+buildExerciseMenu();
+loadPosition();
+render();
+requestWakeLock({ warn:true });
+setupOffline();
+</script>
+</body>
+</html>
