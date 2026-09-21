@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AirPods Media Test</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#111;color:#fff;margin:0;min-height:100vh;display:grid;place-items:center;text-align:center}
+main{width:min(90vw,480px)} h1{font-size:28px} .num{font-size:96px;font-weight:800;margin:20px 0}.status{background:#222;border-radius:16px;padding:16px;margin:18px 0;line-height:1.6}
+button{font:inherit;font-weight:700;border:0;border-radius:14px;padding:16px 22px;margin:6px;background:#fff;color:#111}.log{font-size:14px;color:#bbb;min-height:50px}
+audio{width:100%;margin-top:16px}
+</style>
+</head>
+<body><main>
+<h1>בדיקת AirPods</h1>
+<p>בדיקה בלבד — אינה משנה את Pilates 34.</p>
+<div class="num" id="num">1</div>
+<div class="status" id="status">לחץ "הפעל בדיקה", ואז נסה לחיצה כפולה/משולשת על ה-AirPods.</div>
+<button id="start">הפעל בדיקה</button>
+<button id="prev">הקודם</button><button id="next">הבא</button>
+<audio id="audio" controls loop playsinline></audio>
+<div class="log" id="log"></div>
+<script>
+const num=document.getElementById('num'),status=document.getElementById('status'),log=document.getElementById('log'),audio=document.getElementById('audio');
+let n=1;
+function show(action){n=Math.max(1,Math.min(34,n+(action==='next'?1:-1)));num.textContent=n;log.textContent='התקבלה פקודה: '+(action==='next'?'Next Track':'Previous Track')+' • '+new Date().toLocaleTimeString('he-IL');}
+function install(){
+ if(!('mediaSession' in navigator)){status.textContent='Media Session API אינו זמין בדפדפן הזה.';return false}
+ try{
+  navigator.mediaSession.setActionHandler('nexttrack',()=>show('next'));
+  navigator.mediaSession.setActionHandler('previoustrack',()=>show('prev'));
+  navigator.mediaSession.metadata=new MediaMetadata({title:'AirPods Test',artist:'Pilates 34',album:'Media controls test'});
+  status.textContent='Media Session פעיל. נסה עכשיו לחיצה כפולה ומשולשת.';
+  return true
+ }catch(e){status.textContent='לא ניתן להפעיל Media Session: '+e.message;return false}
+}
+document.getElementById('next').onclick=()=>show('next');
+document.getElementById('prev').onclick=()=>show('prev');
+document.getElementById('start').onclick=async()=>{
+ install();
+ // Tiny silent WAV gives iOS an active media element so hardware media controls have a session to target.
+ audio.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+ try{await audio.play();status.textContent='הבדיקה פעילה. השאר את הדף פתוח ונסה לחיצה כפולה/משולשת.'}catch(e){status.textContent='לחץ Play בנגן שמתחת ואז נסה שוב.'}
+};
+install();
+</script></main></body></html>
