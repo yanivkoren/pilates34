@@ -522,13 +522,13 @@
     <div class="sheet-status">
       <div>Offline: <strong id="offlineMenuStatus">לא נבדק</strong></div>
       <div>מסך דולק: <strong id="wakeMenuStatus">לא נבדק</strong></div>
-      <div class="version">v1.0.1</div>
+      <div class="version">v1.0.2</div>
     </div>
   </section>
 </div>
 
 <script>
-const APP_VERSION = "1.0.1";
+const APP_VERSION = "1.0.2";
 const exercises = [{"n": 1, "name": "The Hundred", "reps": "10 סבבי נשימה — 100 שאיבות ידיים", "file": "mp4/1_hundreds.mp4"}, {"n": 2, "name": "The Roll Up", "reps": "3 חזרות", "file": "mp4/2_Roll-Up.mp4"}, {"n": 3, "name": "The Roll-Over", "reps": "3 לכל כיוון — 6 בסך הכול", "file": "mp4/3_Roll-Over.mp4"}, {"n": 4, "name": "Single Leg Circles", "reps": "5 לכל כיוון, לכל רגל", "file": "mp4/4_Single-Leg-Circles.mp4"}, {"n": 5, "name": "Rolling Like a Ball", "reps": "6 חזרות", "file": "mp4/5_Rolling-Like-Ball.mp4"}, {"n": 6, "name": "Single-Leg Stretch", "reps": "6 לכל רגל", "file": "mp4/6_Single-Leg-Stretch.mp4"}, {"n": 7, "name": "Double-Leg Stretch", "reps": "6 חזרות", "file": "mp4/7_Double-Leg-Stretch.mp4"}, {"n": 8, "name": "Spine Stretch Forward", "reps": "3 חזרות", "file": "mp4/8_Spine-Stretch-Forward.mp4"}, {"n": 9, "name": "Open-Leg Rocker", "reps": "6 חזרות", "file": "mp4/9_Open-Leg-Rocker.mp4"}, {"n": 10, "name": "Corkscrew", "reps": "3 לכל כיוון", "file": "mp4/10_Corkscrew.mp4"}, {"n": 11, "name": "Saw", "reps": "3 לכל צד", "file": "mp4/11_Saw.mp4"}, {"n": 12, "name": "Swan", "reps": "6 חזרות", "file": "mp4/12_Swan.mp4"}, {"n": 13, "name": "Single-Leg Kicks", "reps": "6 לכל רגל", "file": "mp4/13_Single-Leg-Kicks.mp4"}, {"n": 14, "name": "Double-Leg Kicks", "reps": "5 חזרות", "file": "mp4/14-DoubleLegKicks.mp4"}, {"n": 15, "name": "Neck Pull", "reps": "3 חזרות", "file": "mp4/15_Neck-Roll.mp4"}, {"n": 16, "name": "High Scissors", "reps": "6 לכל רגל", "file": "mp4/16_Raised-Scissors.mp4"}, {"n": 17, "name": "High Bicycle", "reps": "6 לכל כיוון", "file": "mp4/17_High-Bicycle.mp4"}, {"n": 18, "name": "Shoulder Bridge", "reps": "3 לכל רגל", "file": "mp4/18_Shoulder-Bridge.mp4"}, {"n": 19, "name": "Spine Twist", "reps": "3 לכל צד", "file": "mp4/19_Spine-Twist.mp4"}, {"n": 20, "name": "Jack Knife", "reps": "3 חזרות", "file": "mp4/20_JackKnife.mp4"}, {"n": 21, "name": "Side Kicks", "reps": "5 לכל וריאציה, לכל צד", "file": "mp4/21_SideKicks.mp4"}, {"n": 22, "name": "Teaser", "reps": "3 חזרות", "file": "mp4/22_Teasers.mp4"}, {"n": 23, "name": "Hip Twist", "reps": "3 לכל כיוון", "file": "mp4/23_Hip-Twists.mp4"}, {"n": 24, "name": "Swimming", "reps": "20–30 שניות", "file": "mp4/24_Swimming.mp4"}, {"n": 25, "name": "Leg Pull Down (Leg Pull Front)", "reps": "3 לכל רגל", "file": "mp4/25_Leg-Pull-Down.mp4"}, {"n": 26, "name": "Leg Pull Up (Leg Pull Back)", "reps": "3 לכל רגל", "file": "mp4/26_Leg-Pull-Up.mp4"}, {"n": 27, "name": "Kneeling Side Kicks", "reps": "4 לכל רגל", "file": "mp4/27_Kneeling-Side-Kicks.mp4"}, {"n": 28, "name": "Side Bend", "reps": "3 לכל צד", "file": "mp4/28_Side-Bend.mp4"}, {"n": 29, "name": "Boomerang", "reps": "3 חזרות", "file": "mp4/29_Boomerang.mp4"}, {"n": 30, "name": "Seal", "reps": "6 חזרות", "file": "mp4/30_Seal.mp4"}, {"n": 31, "name": "Crab", "reps": "6 חזרות", "file": "mp4/31_Crab.mp4"}, {"n": 32, "name": "Rocking", "reps": "5 חזרות", "file": "mp4/32_Rocking.mp4"}, {"n": 33, "name": "Control Balance", "reps": "3 לכל רגל", "file": "mp4/33_Balance.mp4"}, {"n": 34, "name": "Push-Ups", "reps": "3 סבבים של 3 — 9 בסך הכול", "file": "mp4/34_PushUps.mp4"}];
 
 let index = 0;
@@ -537,6 +537,8 @@ let preloadVideo = null;
 let workoutFinished = false;
 let wakeWarningShown = false;
 let keepAwakeEnabled = true;
+let wakeLockPending = null;
+let wakeResumeTimer = null;
 let toastTimer = null;
 
 const el = {
@@ -756,15 +758,18 @@ function updateWakeToggle() {
 }
 
 async function releaseWakeLock(status='כבוי') {
-  if (wakeLock && !wakeLock.released) {
-    try { await wakeLock.release(); } catch (_) {}
-  }
+  const current = wakeLock;
   wakeLock = null;
+
+  if (current && !current.released) {
+    try { await current.release(); } catch (_) {}
+  }
+
   setWakeStatus(status);
   updateWakeToggle();
 }
 
-async function requestWakeLock({ warn=true } = {}) {
+async function requestWakeLock({ warn=true, forceFresh=false } = {}) {
   if (!keepAwakeEnabled) {
     setWakeStatus('כבוי');
     updateWakeToggle();
@@ -783,43 +788,73 @@ async function requestWakeLock({ warn=true } = {}) {
     return false;
   }
 
+  if (forceFresh && wakeLock) {
+    await releaseWakeLock('מחדש…');
+  }
+
   if (wakeLock && !wakeLock.released) {
     setWakeStatus('פעיל');
     updateWakeToggle();
     return true;
   }
 
-  try {
-    wakeLock = await navigator.wakeLock.request('screen');
-    setWakeStatus('פעיל');
-    updateWakeToggle();
+  if (wakeLockPending) return wakeLockPending;
 
-    wakeLock.addEventListener('release', () => {
+  wakeLockPending = (async () => {
+    try {
+      const sentinel = await navigator.wakeLock.request('screen');
+      wakeLock = sentinel;
+      setWakeStatus('פעיל');
+      updateWakeToggle();
+
+      sentinel.addEventListener('release', () => {
+        if (wakeLock === sentinel) wakeLock = null;
+
+        if (document.visibilityState === 'visible') {
+          setWakeStatus(keepAwakeEnabled ? 'שוחרר' : 'כבוי');
+          updateWakeToggle();
+
+          if (keepAwakeEnabled && !workoutFinished) {
+            clearTimeout(wakeResumeTimer);
+            wakeResumeTimer = setTimeout(() => {
+              requestWakeLock({ warn:false, forceFresh:true });
+            }, 250);
+          }
+        }
+      });
+
+      return true;
+    } catch (_) {
       wakeLock = null;
-      if (document.visibilityState === 'visible') {
-        setWakeStatus(keepAwakeEnabled ? 'שוחרר' : 'כבוי');
-        updateWakeToggle();
+      setWakeStatus('לא אושר');
+      updateWakeToggle();
+
+      if (warn && !wakeWarningShown) {
+        wakeWarningShown = true;
+        showToast('⚠️ הדפדפן לא אישר שמירת מסך דולק. מומלץ לבטל זמנית את הנעילה האוטומטית בזמן האימון.');
       }
-    });
-
-    return true;
-  } catch (_) {
-    wakeLock = null;
-    setWakeStatus('לא אושר');
-    updateWakeToggle();
-
-    if (warn && !wakeWarningShown) {
-      wakeWarningShown = true;
-      showToast('⚠️ הדפדפן לא אישר שמירת מסך דולק. מומלץ לבטל זמנית את הנעילה האוטומטית בזמן האימון.');
+      return false;
+    } finally {
+      wakeLockPending = null;
     }
-    return false;
-  }
+  })();
+
+  return wakeLockPending;
 }
 
 async function resumeAfterReturn() {
   if (document.visibilityState !== 'visible' || workoutFinished) return;
-  await requestWakeLock({ warn:true });
-  await ensureVideoPlaying(true);
+
+  clearTimeout(wakeResumeTimer);
+  setWakeStatus(keepAwakeEnabled ? 'מחדש…' : 'כבוי');
+
+  // iOS can mark the old sentinel as released slightly after the PWA becomes visible.
+  // Force a fresh request after the page is fully foregrounded.
+  wakeResumeTimer = setTimeout(async () => {
+    if (document.visibilityState !== 'visible' || workoutFinished) return;
+    await requestWakeLock({ warn:true, forceFresh:true });
+    await ensureVideoPlaying(true);
+  }, 250);
 }
 
 async function setupOffline() {
@@ -944,12 +979,21 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     el.video.pause();
+    clearTimeout(wakeResumeTimer);
+
+    // A Screen Wake Lock is automatically lost when the PWA leaves the foreground.
+    // Clear our local sentinel immediately so the next foreground event always requests a new one.
+    releaseWakeLock(keepAwakeEnabled ? 'מושהה' : 'כבוי');
   } else {
     resumeAfterReturn();
   }
 });
 
 window.addEventListener('pageshow', () => {
+  resumeAfterReturn();
+});
+
+window.addEventListener('focus', () => {
   resumeAfterReturn();
 });
 
